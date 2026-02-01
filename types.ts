@@ -22,4 +22,12 @@ export interface SavedSummary extends SummaryResult {
   originalText: string;
 }
 
-export type AppView = 'HOME' | 'HISTORY';
+export interface AIInstruction {
+  id: number;
+  name: string;
+  content: string;
+  isActive: boolean;
+  isDefault?: boolean;
+}
+
+export type AppView = 'HOME' | 'HISTORY' | 'SETTINGS';

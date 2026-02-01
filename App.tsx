@@ -5,6 +5,7 @@ import { SummaryResult, Stats, AppView, SavedSummary } from './types';
 import StatsCards from './components/StatsCards';
 import SummaryDisplay from './components/SummaryDisplay';
 import HistoryView from './components/HistoryView';
+import SettingsView from './components/SettingsView';
 import { getAllSummaries, saveSummary } from './services/dbService';
 
 const App: React.FC = () => {
@@ -118,6 +119,12 @@ const App: React.FC = () => {
             >
               History
             </button>
+            <button 
+              onClick={() => setView('SETTINGS')}
+              className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${view === 'SETTINGS' ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-dark-800'}`}
+            >
+              Settings
+            </button>
             <div className="w-px h-6 bg-slate-200 dark:bg-dark-700 hidden sm:block"></div>
             <button 
               onClick={() => setIsDark(!isDark)}
@@ -139,7 +146,7 @@ const App: React.FC = () => {
       </header>
 
       <main className="max-w-6xl mx-auto px-4 pt-10">
-        {view === 'HOME' ? (
+        {view === 'HOME' && (
           <>
             <div className="mb-10 text-center animate-in fade-in slide-in-from-top-4 duration-700">
               <h2 className="text-2xl md:text-4xl font-extrabold text-slate-900 dark:text-white mb-3">AI Thread Intelligence</h2>
@@ -235,7 +242,9 @@ const App: React.FC = () => {
               </div>
             )}
           </>
-        ) : (
+        )}
+
+        {view === 'HISTORY' && (
           <div className="space-y-10 pb-20">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                <div>
@@ -260,19 +269,9 @@ const App: React.FC = () => {
             />
           </div>
         )}
-      </main>
 
-      {/* Floating Action for Mobile */}
-      {view === 'HISTORY' && (
-        <button 
-          onClick={() => setView('HOME')}
-          className="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-indigo-600 text-white rounded-full shadow-2xl flex items-center justify-center z-50 animate-bounce"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-        </button>
-      )}
+        {view === 'SETTINGS' && <SettingsView />}
+      </main>
 
       {/* Footer Branding */}
       <footer className="py-10 text-center text-slate-400 dark:text-dark-600 text-[10px] md:text-xs uppercase tracking-widest font-bold">
