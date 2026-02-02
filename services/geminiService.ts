@@ -3,6 +3,11 @@ import { SummaryResult } from "../types";
 import { getActiveInstruction } from "./dbService";
 
 export const generateChatSummaries = async (chatText: string): Promise<SummaryResult> => {
+  // Check if API key is present in the environment
+  if (!process.env.API_KEY) {
+    throw new Error("API Key configuration missing. Please ensure the API_KEY environment variable is set in your deployment settings (e.g., Vercel Environment Variables).");
+  }
+
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   const activeInstruction = await getActiveInstruction();
@@ -22,6 +27,9 @@ export const generateChatSummaries = async (chatText: string): Promise<SummaryRe
     CHAT HISTORY:
     ${chatText}`,
     config: {
+      // Thinking config enables the reasoning model to perform deep analysis before generating the response.
+      // This is crucial for "comprehensive" and "exhaustive" requirements.
+      thinkingConfig: { thinkingBudget: 32768 },
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.OBJECT,
@@ -42,13 +50,14 @@ export const generateChatSummaries = async (chatText: string): Promise<SummaryRe
 
   const text = response.text || "";
   try {
+    // Clean up potential markdown formatting in the JSON response
     const jsonStr = text.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
     return JSON.parse(jsonStr) as SummaryResult;
   } catch (error) {
     console.error("Failed to parse Gemini response:", error);
     return {
-      narrative: `Analysis failed to parse as JSON. Raw output below:\n\n${text}`,
-      technical: "Parsing error. See narrative field for raw data."
+      narrative: `Analysis generation successful, but response parsing failed. Raw output below:\n\n${text}`,
+      technical: "Parsing error. See narrative field for raw data output."
     };
   }
 };
