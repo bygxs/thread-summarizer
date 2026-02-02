@@ -3,11 +3,11 @@ import { SummaryResult } from "../types";
 import { getActiveInstruction } from "./dbService";
 
 export const generateChatSummaries = async (chatText: string): Promise<SummaryResult> => {
-  // Use a direct check for the key. In some environments, it might be on window or process.env
+  // process.env.API_KEY is injected by Vite's define block
   const apiKey = process.env.API_KEY;
   
-  if (!apiKey) {
-    throw new Error("API_KEY not found. If on Vercel, set it in Environment Variables and REDEPLOY. If local, check your .env file.");
+  if (!apiKey || apiKey === '') {
+    throw new Error("Missing Gemini API Key. \n\nLOCAL: Ensure .env.local has API_KEY=xxx\nVERCEL: Ensure Environment Variables has API_KEY set and you have REDEPLOYED.");
   }
 
   const ai = new GoogleGenAI({ apiKey });
@@ -47,10 +47,14 @@ export const generateChatSummaries = async (chatText: string): Promise<SummaryRe
     });
 
     const text = response.text || "";
+    // Clean potential markdown formatting from the response
     const jsonStr = text.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
     return JSON.parse(jsonStr) as SummaryResult;
   } catch (error: any) {
     console.error("Gemini API Error:", error);
-    throw new Error(error.message || "Failed to generate summary. Check your API key and quota.");
+    if (error.message?.includes('404')) {
+      throw new Error("Model not found or API Key invalid. If using a new key, wait 1-2 minutes for activation.");
+    }
+    throw new Error(error.message || "Failed to generate summary.");
   }
 };
