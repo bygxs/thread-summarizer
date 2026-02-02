@@ -3,31 +3,31 @@ import { SavedSummary, AIInstruction } from "../types";
 const DB_NAME = "SummarizerProDB";
 const SUMMARIES_STORE = "summaries";
 const INSTRUCTIONS_STORE = "instructions";
-const DB_VERSION = 3; // Bumped to 3 to force update of default instructions
+const DB_VERSION = 4; // Bumped to 4 to force update of default instructions
 
-const DEFAULT_INSTRUCTION = `Protocol: The Dual-Report Handover (V3 - Comprehensive)
+const DEFAULT_INSTRUCTION = `Protocol: The Deep-Dive Handover (V4 - Exhaustive)
 
-Part 1: The Narrative Handover (The "Human Story")
-- Goal: Create a high-fidelity, long-form chronological account (approx. 400-600 words).
-- Format: A candid, professional story. STRICTLY NO BULLET POINTS in this section.
-- Narrative Beats:
-    1. The Initial Spark: What was the user trying to achieve at the start? What was the "vibe" of the request?
-    2. The Logic Blockers: What specific errors, misunderstandings, or technical hurdles were encountered? Be exhaustive about what went wrong.
-    3. The Pivot Points: When and why did the direction change? Capture the moments of frustration or realization.
-    4. The Breakthroughs: Detailed explanation of how the problems were solved.
-    5. The Current Vibe: What is the emotional and technical state of the project right now?
-    6. Warning to Successor: What traps, circular logic loops, or "ghosts in the machine" should the next AI agent be wary of?
+Part 1: The Narrative Handover (The "Comprehensive Story")
+- Goal: Create a high-fidelity, long-form chronological account (600-1000 words).
+- Format: A candid, professional, and extremely detailed narrative. 
+- Constraint: NO BULLET POINTS. Use well-structured paragraphs.
+- Narrative Beats (Must be addressed in depth):
+    1. The Project Genesis: Exhaustively describe the user's initial prompt, the underlying intent, and the "vibe" or urgency of the request.
+    2. Detailed Logic Impediments: Catalog every single error, syntax error, logic blocker, or architectural misunderstanding. Don't just list them—explain WHY they happened and the specific friction they caused.
+    3. The Evolutionary Path: Describe the specific pivots. When did the user get frustrated? When did the AI fail to understand? Document the "ping-pong" of the conversation.
+    4. Technical Breakthroughs: Provide a step-by-step prose explanation of the solutions implemented.
+    5. The Current Technical Landscape: Describe the project's health, stability, and "feel" at this exact moment.
+    6. Successor's Field Guide: An exhaustive warning for the next AI. Describe the user's specific preferences, past triggers, and the "fragile" parts of the code that need careful handling.
 
-Part 2: The Technical Manifest (The "Hard Data")
-- Goal: A granular, high-density blueprint for immediate resumption.
-- Format: Structured sections with precise detail.
+Part 2: The Technical Manifest (The "Granular Blueprint")
+- Goal: A high-density, low-latency technical reference.
 - Requirements:
-    1. Project Architecture: Specific file structures, patterns, and state management used.
-    2. Tech Stack: All libraries, versions, and API nuances mentioned.
-    3. Logic Flow: Describe complex algorithms or specific functional chains implemented.
-    4. State of Play: A definitive list of what is 100% working, what is buggy, and what is missing.
-    5. Immediate Backlog: The next 5 concrete, atomic steps required to progress.
-    6. Constraints: Any hardware, environment, or API limits identified during the session.`;
+    1. Exhaustive Architecture: Map out the entire component tree, state management patterns, and service interactions.
+    2. Versioned Tech Stack: List every library and the specific reasons for their inclusion.
+    3. Logic Chains: Deep dive into the most complex functions (e.g., the summarizing logic, the DB versioning logic).
+    4. Operational Audit: A line-by-line list of what is fully functional, partially functional (buggy), and strictly missing.
+    5. Immediate Strategic Backlog: The next 10 atomic, specific tasks to be performed.
+    6. Environmental Context: Any browser limits, API quotas, or performance bottlenecks identified.`;
 
 export const openDB = (): Promise<IDBDatabase> => {
   return new Promise((resolve, reject) => {
@@ -39,17 +39,15 @@ export const openDB = (): Promise<IDBDatabase> => {
         db.createObjectStore(SUMMARIES_STORE, { keyPath: "id", autoIncrement: true });
       }
       
-      // If store exists but we bumped version, we might want to refresh default instruction
       if (!db.objectStoreNames.contains(INSTRUCTIONS_STORE)) {
         const instructionStore = db.createObjectStore(INSTRUCTIONS_STORE, { keyPath: "id", autoIncrement: true });
         instructionStore.add({
-          name: "Dual-Report Handover (v3)",
+          name: "Deep-Dive Handover (v4)",
           content: DEFAULT_INSTRUCTION,
           isActive: true,
           isDefault: true
         });
       } else {
-        // Update the default instruction if it already exists during a version bump
         const transaction = request.transaction!;
         const store = transaction.objectStore(INSTRUCTIONS_STORE);
         const getAllReq = store.getAll();
@@ -59,7 +57,7 @@ export const openDB = (): Promise<IDBDatabase> => {
           const defaultInst = instructions.find(i => i.isDefault);
           if (defaultInst) {
             defaultInst.content = DEFAULT_INSTRUCTION;
-            defaultInst.name = "Dual-Report Handover (v3)";
+            defaultInst.name = "Deep-Dive Handover (v4)";
             store.put(defaultInst);
           }
         };
@@ -70,7 +68,6 @@ export const openDB = (): Promise<IDBDatabase> => {
   });
 };
 
-// Summary Methods
 export const saveSummary = async (summary: Omit<SavedSummary, "id">): Promise<number> => {
   const db = await openDB();
   return new Promise((resolve, reject) => {
@@ -107,7 +104,6 @@ export const deleteSummary = async (id: number): Promise<void> => {
   });
 };
 
-// Instruction Methods
 export const getInstructions = async (): Promise<AIInstruction[]> => {
   const db = await openDB();
   return new Promise((resolve, reject) => {
@@ -123,7 +119,6 @@ export const getActiveInstruction = async (): Promise<AIInstruction> => {
   const all = await getInstructions();
   const active = all.find(i => i.isActive);
   if (active) return active;
-  // If none active, find default
   const def = all.find(i => i.isDefault);
   return def || all[0];
 };

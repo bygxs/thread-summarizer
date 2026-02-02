@@ -6,7 +6,7 @@ export const generateChatSummaries = async (chatText: string): Promise<SummaryRe
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   const activeInstruction = await getActiveInstruction();
-  const protocolInstruction = activeInstruction?.content || "Summarize the following chat thread into a narrative and technical report.";
+  const protocolInstruction = activeInstruction?.content || "Summarize the following chat thread into an exhaustive narrative and technical report.";
 
   const response = await ai.models.generateContent({
     model: "gemini-3-pro-preview",
@@ -15,9 +15,11 @@ export const generateChatSummaries = async (chatText: string): Promise<SummaryRe
     ${protocolInstruction}
     
     TASK:
-    Analyze the following chat history exhaustively. Provide high-fidelity, long-form responses for both the Narrative Handover and the Technical Manifest. Do not abbreviate or omit key logic pivots.
+    Examine the provided chat history with extreme scrutiny. 
+    1. For the 'Narrative Handover': Produce a minimum of 600 words (up to 1000) of high-fidelity prose. No brevity allowed.
+    2. For the 'Technical Manifest': Provide an exhaustive blueprint of the current state, logic, and future path.
     
-    CHAT HISTORY FOR ANALYSIS:
+    CHAT HISTORY:
     ${chatText}`,
     config: {
       responseMimeType: "application/json",
@@ -26,7 +28,7 @@ export const generateChatSummaries = async (chatText: string): Promise<SummaryRe
         properties: {
           narrative: {
             type: Type.STRING,
-            description: "An extensive, long-form narrative report (approx 400-600 words) following the provided protocol instructions."
+            description: "An exhaustive, long-form narrative report (600-1000 words) strictly following the provided protocol."
           },
           technical: {
             type: Type.STRING,
@@ -40,14 +42,13 @@ export const generateChatSummaries = async (chatText: string): Promise<SummaryRe
 
   const text = response.text || "";
   try {
-    // Sometimes the model might include markdown code blocks in the response text
     const jsonStr = text.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
     return JSON.parse(jsonStr) as SummaryResult;
   } catch (error) {
     console.error("Failed to parse Gemini response:", error);
     return {
-      narrative: `Error parsing analysis. Raw output: ${text.substring(0, 500)}...`,
-      technical: "Error parsing technical manifest. The AI response did not match the expected JSON format."
+      narrative: `Analysis failed to parse as JSON. Raw output below:\n\n${text}`,
+      technical: "Parsing error. See narrative field for raw data."
     };
   }
 };
