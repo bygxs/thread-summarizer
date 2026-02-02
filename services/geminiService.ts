@@ -3,12 +3,12 @@ import { SummaryResult } from "../types";
 import { getActiveInstruction } from "./dbService";
 
 export const generateChatSummaries = async (chatText: string): Promise<SummaryResult> => {
-  // Check if API key is present in the environment
-  if (!process.env.API_KEY) {
-    throw new Error("API Key configuration missing. Please ensure the API_KEY environment variable is set in your deployment settings (e.g., Vercel Environment Variables).");
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) {
+    throw new Error("API Key not found. Ensure API_KEY is set in your environment variables and redeploy.");
   }
 
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey });
   
   const activeInstruction = await getActiveInstruction();
   const protocolInstruction = activeInstruction?.content || "Summarize the following chat thread into an exhaustive narrative and technical report.";
@@ -16,19 +16,15 @@ export const generateChatSummaries = async (chatText: string): Promise<SummaryRe
   const response = await ai.models.generateContent({
     model: "gemini-3-pro-preview",
     contents: `
-    SYSTEM INSTRUCTION:
-    ${protocolInstruction}
-    
     TASK:
-    Examine the provided chat history with extreme scrutiny. 
+    Examine the provided chat history with extreme scrutiny and provide a JSON response. 
     1. For the 'Narrative Handover': Produce a minimum of 600 words (up to 1000) of high-fidelity prose. No brevity allowed.
     2. For the 'Technical Manifest': Provide an exhaustive blueprint of the current state, logic, and future path.
     
     CHAT HISTORY:
     ${chatText}`,
     config: {
-      // Thinking config enables the reasoning model to perform deep analysis before generating the response.
-      // This is crucial for "comprehensive" and "exhaustive" requirements.
+      systemInstruction: protocolInstruction,
       thinkingConfig: { thinkingBudget: 32768 },
       responseMimeType: "application/json",
       responseSchema: {
@@ -50,14 +46,13 @@ export const generateChatSummaries = async (chatText: string): Promise<SummaryRe
 
   const text = response.text || "";
   try {
-    // Clean up potential markdown formatting in the JSON response
     const jsonStr = text.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
     return JSON.parse(jsonStr) as SummaryResult;
   } catch (error) {
     console.error("Failed to parse Gemini response:", error);
     return {
-      narrative: `Analysis generation successful, but response parsing failed. Raw output below:\n\n${text}`,
-      technical: "Parsing error. See narrative field for raw data output."
+      narrative: `Generation successful, but JSON parsing failed. Raw output:\n\n${text}`,
+      technical: "Parsing error. Check narrative for raw data."
     };
   }
 };

@@ -63,7 +63,6 @@ const App: React.FC = () => {
       const summaryResult = await generateChatSummaries(inputText);
       setResults(summaryResult);
       
-      // Persist to DB
       const title = inputText.split('\n')[0].substring(0, 60) || "Chat Summary";
       await saveSummary({
         ...summaryResult,
@@ -74,8 +73,8 @@ const App: React.FC = () => {
       });
       fetchHistory();
     } catch (err: any) {
-      console.error(err);
-      setError(err.message || "An unexpected error occurred while generating the summary.");
+      console.error("Summarization Error:", err);
+      setError(err.message || "An unexpected error occurred. Check if your API_KEY is set correctly in Vercel.");
     } finally {
       setIsProcessing(false);
     }
@@ -96,11 +95,10 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-dark-950 pb-20 transition-colors">
-      {/* Header */}
       <header className="bg-white/80 dark:bg-dark-900/80 backdrop-blur-md border-b border-slate-200 dark:border-dark-800 sticky top-0 z-30 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => setView('HOME')}>
-            <div className="w-8 h-8 bg-indigo-600 dark:bg-indigo-500 rounded-lg flex items-center justify-center text-white font-bold shadow-indigo-200 dark:shadow-none shadow-lg">Σ</div>
+            <div className="w-8 h-8 bg-indigo-600 dark:bg-indigo-500 rounded-lg flex items-center justify-center text-white font-bold shadow-lg">Σ</div>
             <h1 className="text-lg md:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400 hidden sm:block">
               Summarizer Pro
             </h1>
@@ -129,7 +127,6 @@ const App: React.FC = () => {
             <button 
               onClick={() => setIsDark(!isDark)}
               className="p-2 rounded-xl bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-dark-700 transition-all shadow-inner"
-              aria-label="Toggle Dark Mode"
             >
               {isDark ? (
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -155,12 +152,11 @@ const App: React.FC = () => {
               </p>
             </div>
 
-            {/* Input Section */}
-            <section className="bg-white dark:bg-dark-900 rounded-3xl shadow-xl border border-slate-200 dark:border-dark-800 p-4 md:p-8 mb-8 transition-all">
+            <section className="bg-white dark:bg-dark-900 rounded-3xl shadow-xl border border-slate-200 dark:border-dark-800 p-4 md:p-8 mb-8">
               <textarea
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                placeholder="Paste your chat history here (e.g., User: Hello, Assistant: Hi there!)..."
+                placeholder="Paste your chat history here..."
                 className="w-full h-48 md:h-72 p-5 rounded-2xl border border-slate-200 dark:border-dark-800 focus:ring-4 focus:ring-indigo-100 dark:focus:ring-indigo-900/20 focus:border-indigo-500 dark:focus:border-indigo-400 outline-none transition-all resize-none font-mono text-xs md:text-sm leading-relaxed bg-slate-50/50 dark:bg-dark-950/50 dark:text-slate-300"
               />
               
@@ -168,15 +164,11 @@ const App: React.FC = () => {
                 <div className="flex items-center gap-6 text-xs md:text-sm font-medium text-slate-500 dark:text-dark-400">
                   <div className="flex items-center gap-1.5">
                     <span className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></span>
-                    <span className={inputText.length > 0 ? "text-indigo-600 dark:text-indigo-400" : ""}>
-                      {stats.wordCount.toLocaleString()} words
-                    </span>
+                    <span>{stats.wordCount.toLocaleString()} words</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="w-2 h-2 bg-amber-500 rounded-full"></span>
-                    <span className={inputText.length > 0 ? "text-amber-600 dark:text-amber-400" : ""}>
-                      ~{stats.tokenCountEstimate.toLocaleString()} tokens
-                    </span>
+                    <span>~{stats.tokenCountEstimate.toLocaleString()} tokens</span>
                   </div>
                 </div>
 
@@ -184,7 +176,7 @@ const App: React.FC = () => {
                   <button
                     onClick={handleClear}
                     disabled={!inputText || isProcessing}
-                    className="flex-1 md:flex-none px-6 py-3 text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-700 rounded-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 md:flex-none px-6 py-3 text-sm font-bold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-700 rounded-2xl transition-all disabled:opacity-50"
                   >
                     Clear
                   </button>
@@ -193,26 +185,18 @@ const App: React.FC = () => {
                     disabled={!inputText || isProcessing}
                     className={`flex-1 md:flex-none px-10 py-3 text-sm font-bold text-white rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg ${
                       isProcessing 
-                        ? 'bg-indigo-400 dark:bg-indigo-600 cursor-not-allowed' 
-                        : 'bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 shadow-indigo-200 dark:shadow-none'
+                        ? 'bg-indigo-400 cursor-not-allowed' 
+                        : 'bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600'
                     }`}
                   >
-                    {isProcessing ? (
-                      <>
-                        <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Thinking...
-                      </>
-                    ) : 'Summarize'}
+                    {isProcessing ? 'Thinking...' : 'Summarize'}
                   </button>
                 </div>
               </div>
             </section>
 
             {error && (
-              <div className="bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 px-4 py-3 rounded-2xl mb-8 flex items-center gap-2 animate-in fade-in slide-in-from-left-4">
+              <div className="bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 px-4 py-3 rounded-2xl mb-8 flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                 </svg>
@@ -220,17 +204,9 @@ const App: React.FC = () => {
               </div>
             )}
 
-            {/* Results Section */}
             {(results || isProcessing) && (
               <div className="space-y-8 pb-10">
-                <div className="flex items-center gap-4 py-6">
-                  <div className="h-px flex-1 bg-slate-200 dark:bg-dark-800"></div>
-                  <h3 className="text-xs font-black text-slate-400 dark:text-dark-500 uppercase tracking-widest">Analytics Dashboard</h3>
-                  <div className="h-px flex-1 bg-slate-200 dark:bg-dark-800"></div>
-                </div>
-
                 <StatsCards stats={stats} />
-                
                 {isProcessing && !results ? (
                    <div className="h-64 flex flex-col items-center justify-center text-slate-400 space-y-4 animate-pulse">
                      <div className="w-12 h-12 bg-slate-200 dark:bg-dark-800 rounded-full"></div>
@@ -245,38 +221,10 @@ const App: React.FC = () => {
         )}
 
         {view === 'HISTORY' && (
-          <div className="space-y-10 pb-20">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-               <div>
-                 <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white">Past Summaries</h2>
-                 <p className="text-slate-500 dark:text-dark-400 mt-1 italic">Locally stored for your privacy.</p>
-               </div>
-               <button 
-                onClick={() => setView('HOME')}
-                className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-bold hover:underline"
-               >
-                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                 </svg>
-                 New Analysis
-               </button>
-            </div>
-            
-            <HistoryView 
-              summaries={savedSummaries} 
-              onSelect={handleSelectFromHistory} 
-              onRefresh={fetchHistory}
-            />
-          </div>
+          <HistoryView summaries={savedSummaries} onSelect={handleSelectFromHistory} onRefresh={fetchHistory} />
         )}
-
         {view === 'SETTINGS' && <SettingsView />}
       </main>
-
-      {/* Footer Branding */}
-      <footer className="py-10 text-center text-slate-400 dark:text-dark-600 text-[10px] md:text-xs uppercase tracking-widest font-bold">
-        <p>&copy; {new Date().getFullYear()} Summarizer Pro • Privacy-First Analysis</p>
-      </footer>
     </div>
   );
 };
